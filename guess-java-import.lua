@@ -19,8 +19,7 @@ debugMessage("Selected text: ["..selectedText.."]")
 if selectedText == nil or selectedText == "" then
 	local oldCursorPos = geany.caret()
 	debugMessage("No text selected; seeking current word for position "..oldCursorPos)
-	geany.navigate("word", -1, false)
-	geany.navigate("word", 1, true)
+	geany.keycmd("SELECT_WORD")
 	selectedText = geany.selection():gsub("^%s*(.-)%s*$", "%1")
 	geany.caret(oldCursorPos)
 end
@@ -45,8 +44,9 @@ debugMessage("Importing "..import)
 local startIndex,stopIndex = geany.text():find("package%s")
 if not startIndex then startIndex = 1 end
 
-local oldCursorPos = geany.caret()
+local insertedText = "\nimport "..import..";"
+local oldCursorPos = geany.caret() + insertedText:len()
 geany.caret(startIndex)
 geany.navigate("edge", 1)
-geany.selection("\nimport "..import..";")
+geany.selection(insertedText)
 geany.caret(oldCursorPos)
