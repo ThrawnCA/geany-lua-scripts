@@ -11,6 +11,12 @@ debugEnabled = false
 
 dofile(geany.appinfo()["scriptdir"]..geany.dirsep.."util.lua")
 
+function getParent(classname)
+	local index = classname:len() - classname:reverse():find(".", 1, true)
+	debugMessage("Last dot in "..classname.." is at "..index)
+	return classname:sub(1, index)
+end
+
 ---- Start execution ----
 
 local selectedText = geany.selection()
@@ -32,6 +38,14 @@ end
 
 local searchCommand = "cat "..getSupportDir()..geany.dirsep.."*.index |sort |uniq | grep '\\b"..selectedText.."\\b'"
 local count,imports = getOutputLines(searchCommand)
+for index,import in ipairs(imports) do
+	local starImport = getParent(import)..".*"
+	debugMessage("Looking for "..starImport)
+	if geany.text():find("\nimport%s*"..starImport:gsub("[*]", "[*]")..";") then
+		geany.message("Already imported "..starImport)
+		return
+	end
+end
 
 if count > 0 then
 	import = geany.choose("Is one of these the class you want?", imports)
