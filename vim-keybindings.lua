@@ -1,8 +1,6 @@
 #! /usr/bin/env lua
 -- Provide a subset of vim keybindings.
 --
--- v0.1
--- v0.2 - added commands: fF^$
 -- (c) 2013 by Carl Antuar.
 -- Distribution is permitted under the terms of the GPLv3
 -- or any later version.
@@ -13,7 +11,7 @@ dofile(geany.appinfo()["scriptdir"]..geany.dirsep.."util.lua")
 
 ---- Define constants
 debugEnabled = false
-KEY_GROUPS["nav"] = "hjklwWeEbB"
+KEY_GROUPS["nav"] = "hjklwWeEbBfF"
 SYMBOL_KEYS = {
  ["numbersign"]="#",
  ["slash"]="/",
@@ -51,15 +49,20 @@ SYMBOL_KEYS = {
 
 ---- Define functions ----
 
+local function getChar(prompt) do
+	local char = geany.keygrab(prompt)
+	if SYMBOL_KEYS[char] then char = SYMBOL_KEYS[char] end
+	return char
+end
 
 local function getCharWithRepeats(prompt)
 	local n = 0
-	local char = geany.keygrab(prompt)
+	local char = getChar(prompt)
 	while string.match(char, "^[0-9]$") do
 		if n == 0 then n = tonumber(char)
 		else n = (n * 10) + tonumber(char)
 		end
-		char = geany.keygrab(prompt..n)
+		char = getChar(prompt..n)
 	end
 	if n == 0 then n = 1 end
 	return n,char
@@ -74,24 +77,30 @@ local function vimNavigate(n, char, extend)
 	end
 	geany.select()
 	if char == "h" then
-		geany.navigate("char", -1 * n, true)
+		geany.navigate("char", -1 * n, extend)
 	elseif char == "j" then
 		geany.navigate("edge", -1)
-		geany.navigate("line", n+1, true)
+		geany.navigate("line", n+1, extend)
 	elseif char == "k" then
 		geany.navigate("edge", -1)
 		geany.navigate("line", 1)
-		geany.navigate("line", -1 * (n+1), true)
+		geany.navigate("line", -1 * (n+1), extend)
 	elseif char == "l" then
-		geany.navigate("char", n, true)
+		geany.navigate("char", n, extend)
 	else
 		for i = 1, n do
-			if char == "e" then navWordEndRight(true)
-			elseif char == "E" then navWORDEndRight(true)
-			elseif char == "w" then navWordStartRight(true)
-			elseif char == "W" then navWORDStartRight(true)
-			elseif char == "b" then navWordStartLeft(true)
-			elseif char == "B" then navWORDStartLeft(true)
+			if char == "e" then navWordEndRight(extend)
+			elseif char == "E" then navWORDEndRight(extend)
+			elseif char == "w" then navWordStartRight(extend)
+			elseif char == "W" then navWORDStartRight(extend)
+			elseif char == "b" then navWordStartLeft(extend)
+			elseif char == "B" then navWORDStartLeft(extend)
+			elseif char == "f" or char == "F" then
+				local searchText = getChar()
+				local text = geany.text()
+				if char == "F" then text = text:reverse() end
+				local newIndex = text:find(searchText, geany.caret(), extend)
+				geany.navigate("char", newIndex - geany.caret(), extend)
 			end
 		end
 	end

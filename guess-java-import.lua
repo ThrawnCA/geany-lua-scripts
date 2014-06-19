@@ -11,33 +11,52 @@ debugEnabled = false
 
 dofile(geany.appinfo()["scriptdir"]..geany.dirsep.."util.lua")
 
----- Start execution ----
-
-local selectedText = geany.selection()
-debugMessage("Selected text: ["..selectedText.."]")
-
-if selectedText == nil or selectedText == "" then
-	local oldCursorPos = geany.caret()
-	debugMessage("No text selected; seeking current word for position "..oldCursorPos)
-	geany.navigate("word", -1, false)
-	geany.navigate("word", 1, true)
-	selectedText = geany.selection():gsub("^%s*(.-)%s*$", "%1")
-	geany.caret(oldCursorPos)
+function getParent(classname)
+	local index = classname:len() - classname:reverse():find(".", 1, true)
+	debugMessage("Last dot in "..classname.." is at "..index)
+	return classname:sub(1, index)
 end
 
-debugMessage("Class name is ["..selectedText.."]")
-if geany.text():find("\nimport%s*[a-zA-Z0-9.]+"..selectedText.."%s*;") then
-	geany.message("Already imported "..selectedText)
+function getCurrentWord()
+	local selectedText = geany.selection()
+
+	if selectedText == nil or selectedText == "" then
+		local oldCursorPos = geany.caret()
+		debugMessage("No text selected; seeking current word for position "..oldCursorPos)
+		geany.keycmd("SELECT_WORD")
+		selectedText = geany.selection():gsub("^%s*(.-)%s*$", "%1")
+		geany.caret(oldCursorPos)
+	else
+		debugMessage("Selected text: ["..selectedText.."]")
+	end
+	return selectedText
+end
+
+---- Start execution ----
+
+local className = getCurrentWord()
+
+debugMessage("Class name is ["..className.."]")
+if geany.text():find("\nimport%s*[a-zA-Z0-9.]+"..className.."%s*;") then
+	geany.message("Already imported "..className)
 	return
 end
 
-local searchCommand = "cat "..getSupportDir()..geany.dirsep.."*.index |sort |uniq | grep '\\b"..selectedText.."\\b'"
-local count,imports = getOutputLines(searchCommand)
+local searchCommand = "cat "..getSupportDir()..geany.dirsep.."*.index |sort |uniq | grep '\\b"..className.."\\b'"
+local count,qualifiedImports = getOutputLines(searchCommand)
+for index,import in ipairs(qualifiedImports) do
+	local starImport = getParent(import)..".*"
+	debugMessage("Looking for "..starImport)
+	if geany.text():find("\nimport%s*"..starImport:gsub("[*]", "[*]")..";") then
+		geany.message("Already imported "..starImport)
+		return
+	end
+end
 
 if count > 0 then
-	import = geany.choose("Is one of these the class you want?", imports)
+	import = geany.choose("Is one of these the class you want?", qualifiedImports)
 else
-	geany.message("Couldn't guess import statement for ["..selectedText.."]")
+	geany.message("Couldn't guess import statement for ["..className.."]")
 end
 if not import then return end
 debugMessage("Importing "..import)
@@ -45,8 +64,9 @@ debugMessage("Importing "..import)
 local startIndex,stopIndex = geany.text():find("package%s")
 if not startIndex then startIndex = 1 end
 
-local oldCursorPos = geany.caret()
+local insertedText = "\nimport "..import..";"
+local oldCursorPos = geany.caret() + insertedText:len()
 geany.caret(startIndex)
 geany.navigate("edge", 1)
-geany.selection("\nimport "..import..";")
+geany.selection(insertedText)
 geany.caret(oldCursorPos)
