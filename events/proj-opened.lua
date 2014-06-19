@@ -17,7 +17,7 @@ local indexFile = getSupportDir()..geany.dirsep..geany.appinfo()["project"]["nam
 
 debugMessage("Base search directory is "..searchDir)
 debugMessage("Index file is "..indexFile)
-local searchCommand = "find "..searchDir.." -iname '*.java' | xargs grep -h '^import\\s\\+\\S\\+\\s*;' |grep -o '\\([a-zA-Z0-9]\\+\\.\\)\\+[a-zA-Z0-9*]\\+' |sort |uniq"
+local searchCommand = "find "..searchDir.." -iname '*.java' | xargs grep -h '^import\\s\\+\\S\\+\\s*;' |grep -o '\\([a-zA-Z0-9]\\+\\.\\)\\+[a-zA-Z0-9_*]\\+' |sort |uniq"
 if debugEnabled then getOutputLines(searchCommand) end
 
 local status = os.execute(searchCommand.." > '"..indexFile.."' &")
