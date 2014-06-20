@@ -51,10 +51,11 @@ end
 msg = msg.._SPACER
 local file2Index = 1
 local files = {}
-for filename in geany.documents()
-do
-	files[file2Index] = filename
-	file2Index = file2Index + 1
+for filename in geany.documents() do
+	if geany.fileinfo().changed or filename ~= geany.filename() then
+		files[file2Index] = filename
+		file2Index = file2Index + 1
+	end
 end
 file2 = geany.choose(msg, files)
 if not (file2 == nil) then
