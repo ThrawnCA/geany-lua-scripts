@@ -37,7 +37,7 @@ end
 local className = getCurrentWord()
 
 debugMessage("Class name is ["..className.."]")
-if geany.text():find("\nimport%s*[a-zA-Z0-9.]+"..className.."%s*;") then
+if geany.text():find("\nimport%s*[a-zA-Z0-9.]+%."..className.."%s*;") then
 	geany.message("Already imported "..className)
 	return
 end
