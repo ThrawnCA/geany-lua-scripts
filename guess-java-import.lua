@@ -12,9 +12,13 @@ debugEnabled = false
 dofile(geany.appinfo()["scriptdir"]..geany.dirsep.."util.lua")
 
 function getParent(classname)
-	local index = classname:len() - classname:reverse():find(".", 1, true)
-	debugMessage("Last dot in "..classname.." is at "..index)
-	return classname:sub(1, index)
+	local reverseIndex = classname:reverse():find(".", 1, true)
+	if reverseIndex then
+		local index = classname:len() - reverseIndex
+		debugMessage("Last dot in "..classname.." is at "..index)
+		return classname:sub(1, index)
+	else return nil
+	end
 end
 
 function getCurrentWord()
@@ -61,10 +65,24 @@ end
 if not import then return end
 debugMessage("Importing "..import)
 
-local startIndex,stopIndex = geany.text():find("package%s")
+local startIndex = geany.text():find("package%s")
 if not startIndex then startIndex = 1 end
 
 local insertedText = "\nimport "..import..";"
+local package = insertedText
+local found = false
+repeat
+	package = getParent(package)
+	if package then
+		debugMessage("Seeking optimal entry point for "..package)
+		insertionIndex = geany.text():find(package)
+		if insertionIndex then
+			startIndex = insertionIndex
+			found = true
+		end
+	end
+until found or not package
+
 local oldCursorPos = geany.caret() + insertedText:len()
 geany.caret(startIndex)
 geany.navigate("edge", 1)
