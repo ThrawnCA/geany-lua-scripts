@@ -72,16 +72,14 @@ local insertedText = "\nimport "..import..";"
 local package = insertedText
 local found = false
 repeat
-	package = getParent(package)
-	if package then
-		debugMessage("Seeking optimal entry point for "..package)
-		insertionIndex = geany.text():find(package)
-		if insertionIndex then
-			startIndex = insertionIndex
-			found = true
-		end
+	debugMessage("Seeking optimal entry point for "..package)
+	insertionIndex = geany.text():find(package)
+	if insertionIndex then
+		startIndex = insertionIndex
+		found = true
 	end
-until found or not package
+	package = package:sub(1, package:len()-1)
+until found or package:len() == 8
 
 local oldCursorPos = geany.caret() + insertedText:len()
 geany.caret(startIndex)
