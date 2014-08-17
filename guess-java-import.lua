@@ -21,6 +21,10 @@ function getParent(classname)
 	end
 end
 
+function getSurroundingLine(caret)
+	return geany.lines(geany.rowcol(caret))
+end
+
 function getCurrentWord()
 	local selectedText = geany.selection()
 
@@ -66,16 +70,24 @@ if not import then return end
 debugMessage("Importing "..import)
 
 local startIndex = geany.text():find("package%s")
-if not startIndex then startIndex = 1 end
+if startIndex then
+	startIndex = startIndex + getSurroundingLine(startIndex):len() - 1
+else
+	startIndex = 0
+end
 
-local insertedText = "\nimport "..import..";"
+local insertedText = "import "..import..";\n"
 local package = insertedText
 local found = false
 repeat
 	debugMessage("Seeking optimal entry point for "..package)
 	insertionIndex = geany.text():find(package)
 	if insertionIndex then
-		startIndex = insertionIndex
+		startIndex = insertionIndex - 1
+		local existingLine = getSurroundingLine(insertionIndex)
+		if insertedText > existingLine then
+			startIndex = startIndex + existingLine:len()
+		end
 		found = true
 	end
 	package = package:sub(1, package:len()-1)
@@ -83,6 +95,6 @@ until found or package:len() == 8
 
 local oldCursorPos = geany.caret() + insertedText:len()
 geany.caret(startIndex)
-geany.navigate("edge", 1)
+debugMessage("About to insert "..insertedText.." at "..startIndex)
 geany.selection(insertedText)
 geany.caret(oldCursorPos)
