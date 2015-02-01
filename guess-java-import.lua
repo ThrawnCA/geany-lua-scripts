@@ -83,13 +83,18 @@ repeat
 	debugMessage("Seeking optimal entry point for "..package)
 	insertionIndex = geany.text():find(package)
 	if insertionIndex then
+		-- seek the best position
 		startIndex = insertionIndex - 1
-		local existingLine = getSurroundingLine(insertionIndex)
-		if insertedText > existingLine then
-			startIndex = startIndex + existingLine:len()
-		end
-		found = true
+		repeat
+			local existingLine = getSurroundingLine(startIndex + 1)
+			if insertedText > existingLine and existingLine:find(package) then
+				startIndex = startIndex + existingLine:len()
+			else
+				found = true
+			end
+		until found
 	end
+	-- subtract one character at a time until we find a match
 	package = package:sub(1, package:len()-1)
 until found or package:len() == 8
 
