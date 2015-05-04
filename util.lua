@@ -40,7 +40,7 @@ function getOutputLines(command)
 end
 
 function atDocumentEdge()
-	return geany.caret() == 1 or geany.caret() == geany.length()
+	return geany.caret() < 2 or geany.caret() == geany.length()
 end
 
 function isLowerCase(charCode)
@@ -178,4 +178,3 @@ function setFileContents(filename, contents)
 	fileHandle:flush()
 	fileHandle:close()
 end
-
