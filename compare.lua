@@ -15,16 +15,14 @@ debugEnabled = false
 
 dofile(geany.appinfo()["scriptdir"]..geany.dirsep.."util.lua")
 
-function getDiffCommand(file1, file2)
-	if os.execute("meld --version") == 0 then return "meld"
-	elseif os.execute("kompare --version") == 0 then return "kompare"
-	elseif os.execute("kdiff3 --version") == 0 then return "kdiff3"
-	elseif os.execute("diffuse --version") == 0 then return "diffuse"
-	elseif os.execute("tkdiff --version") == 0 then return "tkdiff"
-	elseif os.execute("opendiff --version") == 0 then return "opendiff"
-	else
-		return "diff"
-	end
+local function getDiffCommand()
+	if tryCommand("meld --version") then return "meld" end
+	if tryCommand("kompare --version") then return "kompare" end
+	if tryCommand("kdiff3 --version") then return "kdiff3" end
+	if tryCommand("diffuse --version") then return "diffuse" end
+	if tryCommand("tkdiff --version") then return "tkdiff" end
+	if tryCommand("opendiff --version") then return "opendiff" end
+	return "diff"
 end
 
 ---- Start execution ----
@@ -60,6 +58,7 @@ end
 file2 = geany.choose(msg, files)
 if not (file2 == nil) then
 	local diffCommand = getDiffCommand()
+	debugMessage("Using diff command "..diffCommand)
 	if diffCommand == "diff" then
 		-- no external program found; use diff
 		geany.newfile()

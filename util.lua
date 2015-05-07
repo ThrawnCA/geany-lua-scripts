@@ -146,6 +146,12 @@ function navWORDStartLeft(extend)
 	until isWhitespace(previousCharCode) or atDocumentEdge()
 end
 
+function tryCommand(command)
+	local result = os.execute(command)
+	debugMessage("Result of executing ["..command.."] is "..tostring(result))
+	return result == 0 or result == true
+end
+
 function getListCommand(dirname, fileFilter)
 	return "ls -t "..dirname..geany.dirsep..fileFilter
 end
