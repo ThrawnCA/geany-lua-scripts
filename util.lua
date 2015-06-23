@@ -39,6 +39,15 @@ function getOutputLines(command)
 	return lineCount,lines
 end
 
+function getCurrentLine()
+	local line, column = geany.rowcol()
+	return geany.lines(line)
+end
+
+function trim(text)
+	return text:gsub("^%s*(.-)%s*$", "%1")
+end
+
 function atDocumentEdge()
 	return geany.caret() < 2 or geany.caret() == geany.length()
 end
