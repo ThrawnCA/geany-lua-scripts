@@ -10,19 +10,33 @@ debugEnabled = false
 
 dofile(geany.appinfo()["scriptdir"]..geany.dirsep.."util.lua")
 
+local function replace(text, replacementCaret, defaultReplacement)
+    replacement = geany.input("Replacement text:", defaultReplacement)
+    if replacement then
+        geany.selection(text)
+        replacementCaret = replacementCaret + text:len()
+    else
+        replacement = trim(text)
+    end
+    geany.caret(replacementCaret)
+    geany.selection(replacement)
+end
+
 ---- Start execution ----
 local text = geany.selection()
 if not text then return end
 debugMessage("Moving "..text.." to end of previous line")
-local replacement = geany.input("Replacement text:")
-if not replacement then return end
-geany.selection(replacement)
+geany.selection("")
+local replacementCaret = geany.caret();
 geany.navigate("edge", -1)
 if atDocumentEdge() then
     debugMessage("Inserting new line at top of document")
-    geany.selection(text..'\n')
+    replace(text..'\n', replacementCaret, "")
 else
     geany.navigate("line", -1)
     geany.navigate("edge", 1)
-    geany.selection(' '..text)
+    local currentLine = getCurrentLine()
+    debugMessage("Target line is "..currentLine)
+    local _, _, replacement = currentLine:find("(%S+)%s*=")
+    replace(text, replacementCaret, replacement)
 end
