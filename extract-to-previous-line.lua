@@ -20,6 +20,8 @@ local function replace(text, replacementCaret, defaultReplacement)
     end
     geany.caret(replacementCaret)
     geany.selection(replacement)
+    geany.navigate("line", -1)
+    geany.navigate("edge", 1)
 end
 
 ---- Start execution ----
